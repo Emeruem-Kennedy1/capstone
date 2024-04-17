@@ -72,7 +72,8 @@ function cleanData(data) {
           const { title, artist, sampleType, genre, detailUrl } = sample;
           return {
             title: title.trim(), // Trim title to remove unwanted whitespace
-            artists: cleanArtist(artist),
+            artist: cleanArtist(artist)[0], // Only use the first artist for now [TODO: Handle multiple artists
+            features: cleanArtist(artist).slice(1), // Use the rest of the artists as features
             sampleTypes: getSampleType(sampleType),
             genres: getGenres(genre),
             detailUrl,

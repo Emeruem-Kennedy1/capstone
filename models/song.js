@@ -4,8 +4,16 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    releaseDate: {
-      type: DataTypes.DATEONLY,
+    detailedURL: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    artistId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: "Artists",
+        key: "id",
+      },
     },
   });
 

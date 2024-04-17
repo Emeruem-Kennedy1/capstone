@@ -101,11 +101,10 @@ const getSongsData = async (songs) => {
     });
     const allSongSamples = {};
     for (const song of songs) {
-      const { artist, title } = song;
+      const { artist, title, genre } = song;
       const { base } = buildWhoSampledURL(artist, title, "samples");
 
       await page.goto(base, { waitUntil: "domcontentloaded" });
-
       const sectionHeaders = await page.evaluate(() => {
         const headers = [];
         document
@@ -137,7 +136,7 @@ const getSongsData = async (songs) => {
             : (samples["sampled"] = data);
         }
       }
-      allSongSamples[title] = samples;
+      allSongSamples[title + " by " + artist + " (" + genre + ")"] = samples;
     }
 
     await browser.close();
