@@ -4,7 +4,7 @@ async function importData(jsonData) {
   for (const [key, value] of Object.entries(jsonData)) {
     const songTitle = key.split(" by ")[0];
     const mainArtistName = key.split(" by ")[1].split(" (")[0];
-    const genre = key.split(" (")[1].split("):")[0].toLowerCase();
+    const genre = key.split(" (")[1].split(")")[0].toLowerCase();
 
     // Find or create the main artist
     const [mainArtist, mainArtistCreated] = await db.Artist.findOrCreate({
@@ -77,23 +77,24 @@ async function handleSample(mainSong, sampleData, isSampled) {
     });
   }
 
-  // Link the sampled song to the genres if they're not already linked
-  for (const genre of genres) {
-    const [sampleGenre, sampleGenreCreated] = await db.Genre.findOrCreate({
-      where: { name: genre.toLowerCase() },
-    });
+  // ! genres are not part of the data (yet) 
+  // // Link the sampled song to the genres if they're not already linked
+  // for (const genre of genres) {
+  //   const [sampleGenre, sampleGenreCreated] = await db.Genre.findOrCreate({
+  //     where: { name: genre.toLowerCase() },
+  //   });
 
-    const songGenre = await db.SongGenre.findOne({
-      where: { songId: sampleSong.id, genreId: sampleGenre.id },
-    });
+  //   const songGenre = await db.SongGenre.findOne({
+  //     where: { songId: sampleSong.id, genreId: sampleGenre.id },
+  //   });
 
-    if (!songGenre) {
-      await db.SongGenre.create({
-        songId: sampleSong.id,
-        genreId: sampleGenre.id,
-      });
-    }
-  }
+  //   if (!songGenre) {
+  //     await db.SongGenre.create({
+  //       songId: sampleSong.id,
+  //       genreId: sampleGenre.id,
+  //     });
+  //   }
+  // }
 }
 
 export { importData };

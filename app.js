@@ -1,6 +1,8 @@
 import express from "express";
 import db from "./models/index.js";
-// import { scrapeWebsite } from "./services/webScrapper.js";
+import { getSongsData } from "./services/webScrapper.js";
+import { cleanData } from "./utils/dataCleaners.js";
+import { importData } from "./services/dataWriter.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,10 +12,6 @@ app.use(express.json());
 async function testDBConnection() {
   try {
     await db.sequelize.authenticate();
-
-    console.log(
-      "Connection to the database has been established successfully."
-    );
   } catch (error) {
     console.error("Unable to connect to the database:", error);
   }
@@ -22,26 +20,40 @@ async function testDBConnection() {
 // Call the function to test DB connection
 testDBConnection();
 
-// routes 
-
-// add a song
-const addSong = async (songtitle) => {
-  try {
-    const song = await db.Song.create(songtitle);
-    console.log("The song has been added");
-    return song;
-  } catch (error) {
-    console.error("Unable to add the song:", error);
-  }
-};
-
 app.get("/", (req, res) => {
   res.send("Welcome to the music app!");
+  // time the function
+  const start = Date.now();
+  const songs = [
+    {
+      artist: "Kanye West",
+      title: "Mercy",
+      genre: "rap",
+    },
+    {
+      artist: "Kanye West",
+      title: "Stronger",
+      genre: "rap",
+    },
+    {
+      artist: "Jay-Z",
+      title: "Dead Presidents",
+      genre: "rap",
+    },
+  ];
+  console.log(`Scapping ${songs.length} songs...`);
+  const songsSamples = getSongsData(songs).then((data) => {
+    const end = Date.now();
+    const cleanedData = cleanData(data);
+    importData(cleanedData);
+    console.log(`Scraping took ${end - start} ms`);
+    console.log("Data imported successfully");
+  });
 });
 
 app.get("/songs", async (req, res) => {
-    // const songs = scrapeWebsite("https://www.billboard.com/charts/hot-100");
-    // res.json(songs);
+  // const songs = scrapeWebsite("https://www.billboard.com/charts/hot-100");
+  // res.json(songs);
 });
 
 // Listen on PORT

@@ -4,6 +4,7 @@
  * @returns {string[]} - An array of cleaned artist names.
  */
 function cleanArtist(artist) {
+  console.log(artist);
   // remove year from artist name
   const cleanedArtist = artist.replace(/\s\(\d{4}\)/, "");
   // split artists to a list
@@ -75,7 +76,7 @@ function cleanData(data) {
             artist: cleanArtist(artist)[0], // Only use the first artist for now [TODO: Handle multiple artists
             features: cleanArtist(artist).slice(1), // Use the rest of the artists as features
             sampleTypes: getSampleType(sampleType),
-            genres: getGenres(genre),
+            // genres: getGenres(genre),
             detailUrl,
           };
         });
@@ -85,6 +86,7 @@ function cleanData(data) {
       }
     }
   }
+  console.log(cleanedData);
   return cleanedData;
 }
 

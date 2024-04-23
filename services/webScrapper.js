@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { buildWhoSampledURL } from "../utils/urlBuilder.js";
+import fs from "fs";
 
 puppeteer.use(StealthPlugin());
 
@@ -46,32 +47,28 @@ async function scrapeSamplesFromTable(page) {
 
 const scrapeCurrentSection = async (page, sectionTitle) => {
   return await page.evaluate((sectionTitle) => {
-    const data = [];
+    let data = [];
     const sectionHeaders = document.querySelectorAll("h3.section-header-title");
 
     sectionHeaders.forEach((header) => {
       if (header.textContent.includes(sectionTitle)) {
         const section = header.closest("section");
-        const entries = section.querySelectorAll(".listEntry.sampleEntry");
+        // Update selector to find `tr` elements inside `tbody` of the table within the section
+        const entries = section.querySelectorAll("table.tdata tbody tr");
 
         entries.forEach((entry) => {
+          // Adjusting selectors according to actual HTML structure
           const title =
-            entry.querySelector(".trackDetails .trackName")?.textContent ||
-            "Unknown";
+            entry.querySelector(".tdata__td2 a")?.textContent || "Unknown";
           const artist =
-            entry
-              .querySelector(".trackDetails .trackArtist")
-              ?.textContent.replace("by ", "")
-              .trim() || "Unknown";
+            entry.querySelector(".tdata__td3 a")?.textContent || "Unknown";
+          const year =
+            entry.querySelectorAll(".tdata__td3")[1]?.textContent || "Unknown"; // Assuming year is always the second .tdata__td3
           const sampleType =
-            entry.querySelector(".trackBadge .topItem")?.textContent ||
-            "Unknown";
-          const genre =
-            entry.querySelector(".trackBadge .bottomItem")?.textContent ||
-            "Unknown";
-          const detailUrl = entry.querySelector("a")?.href;
+            entry.querySelector(".tdata__badge")?.textContent || "Unknown";
+          const detailUrl = entry.querySelector(".tdata__td2 a")?.href;
 
-          data.push({ title, artist, sampleType, genre, detailUrl });
+          data.push({ title, artist, year, sampleType, detailUrl });
         });
       }
     });
@@ -86,25 +83,31 @@ const getSongsData = async (songs) => {
       headless: true,
     });
     const page = await browser.newPage();
-    await page.setRequestInterception(true);
+    // await page.setRequestInterception(true);
     // abort requests for stylesheets and images
-    page.on("request", (req) => {
-      if (
-        req.resourceType() === "stylesheet" ||
-        req.resourceType() === "font" ||
-        req.resourceType() === "image"
-      ) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
+    // page.on("request", (req) => {
+    //   if (
+    //     // req.resourceType() === "stylesheet" ||
+    //     // req.resourceType() === "font" ||
+    //     req.resourceType() === "image"
+    //   ) {
+    //     req.abort();
+    //   } else {
+    //     req.continue();
+    //   }
+    // });
     const allSongSamples = {};
     for (const song of songs) {
       const { artist, title, genre } = song;
       const { base } = buildWhoSampledURL(artist, title, "samples");
 
       await page.goto(base, { waitUntil: "domcontentloaded" });
+      page.on("console", (msg) => {
+        if (msg.text().includes("Third-party")) return;
+        console.log("PAGE LOG:", msg.text());
+      });
+      const content = await page.content();
+      fs.writeFileSync("content.html", content);
       const sectionHeaders = await page.evaluate(() => {
         const headers = [];
         document
@@ -119,11 +122,16 @@ const getSongsData = async (songs) => {
               seeAllLink: seeAllButton ? seeAllButton.href : null,
             });
           });
+
         return headers;
       });
 
       let samples = {};
       for (const { title, seeAllLink } of sectionHeaders) {
+        // console.log(
+        //   title.toLowerCase().includes("sample") ||
+        //     title.toLowerCase().includes("sampled"), title
+        // );
         // only get the samples and sampled sections
         if (
           title.toLowerCase().includes("sample") ||
@@ -140,6 +148,7 @@ const getSongsData = async (songs) => {
     }
 
     await browser.close();
+    fs.writeFileSync("samples.json", JSON.stringify(allSongSamples, null, 2));
     return allSongSamples;
   } catch (error) {
     console.error("An error occurred while scraping the website:", error);
