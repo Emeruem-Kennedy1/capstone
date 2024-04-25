@@ -8,7 +8,7 @@ This Music Web App automatically creates playlists by analyzing song samples and
 As of now, the app features a basic web scraper that collects song data from specified music websites. The data doesn't include the genre of the songs but I plan to add this soon.
 
 ## Demo of Web Scraper
-![Web Scraper Demo](https://youtu.be/g1vBobrE0nk)
+[Web Scraper Demo](https://youtu.be/g1vBobrE0nk)
 
 ## Features
 - **Web Scraper**: Collects and processes song data from various online sources.
